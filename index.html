@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixabay Image Downloader</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Animate.css for animations -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <style>
+        /* Custom styles */
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .image-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .loading-spinner {
+            border-top-color: #667eea;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+ <!-- Header -->
+<header class="bg-gradient-to-r from-blue-900 to-indigo-800 text-white shadow-xl">
+    <div class="container mx-auto px-4 py-4">
+        <div class="flex flex-col md:flex-row justify-between items-center">
+            <div class="flex items-center mb-4 md:mb-0 group">
+                <div class="relative">
+                    <div class="absolute -inset-1 bg-gradient-to-r from-cyan-400 to-blue-600 rounded-lg blur-sm 
+                                opacity-75 group-hover:opacity-100 transition duration-200"></div>
+                    <div class="relative flex items-center bg-gray-900 px-4 py-3 rounded-lg">
+                        <i class="fas fa-code text-2xl text-cyan-400 mr-3"></i>
+                        <h1 class="text-2xl font-bold bg-clip-text text-transparent 
+                                  bg-gradient-to-r from-cyan-400 to-blue-400 tracking-tight">
+                            CoderW
+                        </h1>
+                        <span class="ml-2 px-2 py-1 bg-blue-600 text-xs rounded-full 
+                                    animate-pulse">PRO</span>
+                    </div>
+                </div>
+            </div>
+            <div class="w-full md:w-1/2">
+                <div class="relative">
+                    <input type="text" id="searchInput" placeholder="Search for images..." 
+                        class="w-full px-5 py-3 rounded-full text-gray-800 focus:outline-none 
+                              focus:ring-2 focus:ring-cyan-300 shadow-lg transition duration-300">
+                    <button id="searchBtn" 
+                            class="absolute right-0 top-0 h-full px-5 text-gray-600 hover:text-blue-700 
+                                   transition-colors duration-200">
+                        <i class="fas fa-search text-lg"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        <!-- Hero Section -->
+        <section class="text-center mb-12 animate__animated animate__fadeIn">
+            <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4">Discover Stunning Free Images</h2>
+            <p class="text-lg text-gray-600 max-w-2xl mx-auto">Browse and download high-quality royalty-free images from Pixabay's extensive library. Perfect for your projects!</p>
+        </section>
+
+        <!-- Categories -->
+        <section class="mb-12 animate__animated animate__fadeIn">
+            <h3 class="text-xl font-semibold text-gray-800 mb-4">Popular Categories</h3>
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
+                <button class="category-btn px-4 py-2 bg-white rounded-lg shadow hover:bg-purple-100 transition-colors" data-category="nature">Nature</button>
+                <button class="category-btn px-4 py-2 bg-white rounded-lg shadow hover:bg-purple-100 transition-colors" data-category="travel">Travel</button>
+                <button class="category-btn px-4 py-2 bg-white rounded-lg shadow hover:bg-purple-100 transition-colors" data-category="animals">Animals</button>
+                <button class="category-btn px-4 py-2 bg-white rounded-lg shadow hover:bg-purple-100 transition-colors" data-category="food">Food</button>
+                <button class="category-btn px-4 py-2 bg-white rounded-lg shadow hover:bg-purple-100 transition-colors" data-category="technology">Technology</button>
+                <button class="category-btn px-4 py-2 bg-white rounded-lg shadow hover:bg-purple-100 transition-colors" data-category="business">Business</button>
+            </div>
+        </section>
+
+        <!-- Results Section -->
+        <section>
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-semibold text-gray-800" id="resultsTitle">Popular Images</h3>
+                <div class="flex items-center">
+                    <label for="perPage" class="mr-2 text-gray-700">Images per page:</label>
+                    <select id="perPage" class="px-2 py-1 border rounded focus:outline-none focus:ring-1 focus:ring-purple-500">
+                        <option value="20">20</option>
+                        <option value="40">40</option>
+                        <option value="60">60</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Loading Indicator -->
+            <div id="loadingIndicator" class="hidden flex justify-center my-12">
+                <div class="loading-spinner h-12 w-12 border-4 border-t-4 border-gray-200 rounded-full"></div>
+            </div>
+
+            <!-- Images Grid -->
+            <div id="imagesGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                <!-- Images will be loaded here via JS -->
+            </div>
+
+            <!-- Pagination -->
+            <div id="pagination" class="flex justify-center mt-8 hidden">
+                <button id="prevPage" class="px-4 py-2 mx-1 bg-white rounded shadow hover:bg-purple-100 disabled:opacity-50">Previous</button>
+                <div id="pageNumbers" class="flex">
+                    <!-- Page numbers will be added here -->
+                </div>
+                <button id="nextPage" class="px-4 py-2 mx-1 bg-white rounded shadow hover:bg-purple-100 disabled:opacity-50">Next</button>
+            </div>
+
+            <!-- No Results Message -->
+            <div id="noResults" class="hidden text-center py-12">
+                <i class="fas fa-image text-5xl text-gray-300 mb-4"></i>
+                <h4 class="text-xl font-semibold text-gray-600">No images found</h4>
+                <p class="text-gray-500">Try a different search term</p>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-8">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-4 md:mb-0">
+                    <h3 class="text-xl font-bold">Pixabay Image Downloader</h3>
+                    <p class="text-gray-400">Powered by Pixabay API</p>
+                </div>
+                <div class="flex space-x-4">
+                    <a href="#" class="hover:text-purple-300 transition-colors"><i class="fab fa-github"></i> GitHub</a>
+                    <a href="#" class="hover:text-purple-300 transition-colors"><i class="fab fa-twitter"></i> Twitter</a>
+                    <a href="#" class="hover:text-purple-300 transition-colors"><i class="fas fa-envelope"></i> Contact</a>
+                </div>
+            </div>
+            <div class="mt-6 text-center text-gray-400 text-sm">
+                <p>All images are from Pixabay and are free to use under the Pixabay License</p>
+                <p class="mt-2">© 2023 Pixabay Image Downloader. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Image Modal -->
+    <div id="imageModal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg max-w-4xl w-full mx-4 max-h-screen overflow-auto">
+            <div class="flex justify-between items-center p-4 border-b">
+                <h3 class="text-lg font-semibold">Image Details</h3>
+                <button id="closeModal" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="p-4">
+                <img id="modalImage" src="" alt="" class="w-full h-auto rounded-lg mb-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <h4 class="font-semibold mb-2">Image Information</h4>
+                        <p id="imageUser" class="text-gray-600"></p>
+                        <p id="imageTags" class="text-gray-600"></p>
+                        <p id="imageSize" class="text-gray-600"></p>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold mb-2">Download Options</h4>
+                        <div class="space-y-2">
+                            <button class="download-btn w-full px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors" data-size="large">Download Large (1024px)</button>
+                            <button class="download-btn w-full px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors" data-size="medium">Download Medium (640px)</button>
+                            <button class="download-btn w-full px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors" data-size="small">Download Small (340px)</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Pixabay API configuration
+        const API_KEY = '51210000-5992efdde191850b017f982a2'; // Replace with your actual Pixabay API key
+        let currentPage = 1;
+        let perPage = 20;
+        let currentQuery = '';
+        let currentCategory = '';
+        let totalHits = 0;
+        let currentImageId = null;
+
+        // DOM Elements
+        const searchInput = document.getElementById('searchInput');
+        const searchBtn = document.getElementById('searchBtn');
+        const categoryBtns = document.querySelectorAll('.category-btn');
+        const imagesGrid = document.getElementById('imagesGrid');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const pagination = document.getElementById('pagination');
+        const prevPageBtn = document.getElementById('prevPage');
+        const nextPageBtn = document.getElementById('nextPage');
+        const pageNumbers = document.getElementById('pageNumbers');
+        const noResults = document.getElementById('noResults');
+        const resultsTitle = document.getElementById('resultsTitle');
+        const perPageSelect = document.getElementById('perPage');
+        const imageModal = document.getElementById('imageModal');
+        const closeModal = document.getElementById('closeModal');
+        const modalImage = document.getElementById('modalImage');
+        const imageUser = document.getElementById('imageUser');
+        const imageTags = document.getElementById('imageTags');
+        const imageSize = document.getElementById('imageSize');
+        const downloadBtns = document.getElementsByClassName('download-btn');
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchPopularImages();
+            
+            // Event listeners
+            searchBtn.addEventListener('click', handleSearch);
+            searchInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') handleSearch();
+            });
+            
+            categoryBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    currentCategory = btn.dataset.category;
+                    currentQuery = '';
+                    searchInput.value = '';
+                    currentPage = 1;
+                    fetchImagesByCategory(currentCategory);
+                });
+            });
+            
+            prevPageBtn.addEventListener('click', () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    fetchImages();
+                }
+            });
+            
+            nextPageBtn.addEventListener('click', () => {
+                if (currentPage < Math.ceil(totalHits / perPage)) {
+                    currentPage++;
+                    fetchImages();
+                }
+            });
+            
+            perPageSelect.addEventListener('change', () => {
+                perPage = parseInt(perPageSelect.value);
+                currentPage = 1;
+                fetchImages();
+            });
+            
+            closeModal.addEventListener('click', () => {
+                imageModal.classList.add('hidden');
+            });
+            
+            // Close modal when clicking outside
+            imageModal.addEventListener('click', (e) => {
+                if (e.target === imageModal) {
+                    imageModal.classList.add('hidden');
+                }
+            });
+        });
+
+        // Handle search
+        function handleSearch() {
+            currentQuery = searchInput.value.trim();
+            currentCategory = '';
+            currentPage = 1;
+            
+            if (currentQuery === '') {
+                fetchPopularImages();
+            } else {
+                fetchImages();
+            }
+        }
+
+        // Fetch popular images
+        function fetchPopularImages() {
+            currentQuery = '';
+            currentCategory = '';
+            resultsTitle.textContent = 'Popular Images';
+            fetchImages();
+        }
+
+        // Fetch images by category
+        function fetchImagesByCategory(category) {
+            resultsTitle.textContent = `${category.charAt(0).toUpperCase() + category.slice(1)} Images`;
+            fetchImages();
+        }
+
+        // Fetch images from Pixabay API
+        function fetchImages() {
+            showLoading();
+            imagesGrid.innerHTML = '';
+            noResults.classList.add('hidden');
+            
+            let url;
+            if (currentQuery) {
+                url = `https://pixabay.com/api/?key=${API_KEY}&q=${encodeURIComponent(currentQuery)}&page=${currentPage}&per_page=${perPage}&image_type=photo`;
+            } else if (currentCategory) {
+                url = `https://pixabay.com/api/?key=${API_KEY}&q=${encodeURIComponent(currentCategory)}&page=${currentPage}&per_page=${perPage}&image_type=photo`;
+            } else {
+                url = `https://pixabay.com/api/?key=${API_KEY}&page=${currentPage}&per_page=${perPage}&image_type=photo`;
+            }
+            
+            // AJAX request
+            const xhr = new XMLHttpRequest();
+            xhr.open('GET', url, true);
+            xhr.onload = function() {
+                if (this.status === 200) {
+                    const response = JSON.parse(this.responseText);
+                    totalHits = response.totalHits;
+                    
+                    if (response.hits.length > 0) {
+                        displayImages(response.hits);
+                        setupPagination();
+                    } else {
+                        showNoResults();
+                    }
+                } else {
+                    console.error('Error fetching images');
+                    showNoResults();
+                }
+                hideLoading();
+            };
+            xhr.onerror = function() {
+                console.error('Request failed');
+                hideLoading();
+                showNoResults();
+            };
+            xhr.send();
+        }
+
+        // Display images in the grid
+        function displayImages(images) {
+            imagesGrid.innerHTML = '';
+            
+            images.forEach(image => {
+                const imageCard = document.createElement('div');
+                imageCard.className = 'bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 image-card hover:shadow-xl';
+                imageCard.innerHTML = `
+                    <div class="relative overflow-hidden" style="padding-top: 75%;">
+                        <img src="${image.webformatURL}" alt="${image.tags}" 
+                            class="absolute top-0 left-0 w-full h-full object-cover cursor-pointer hover:scale-105 transition-transform duration-300"
+                            data-id="${image.id}">
+                    </div>
+                    <div class="p-4">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-sm text-gray-600"><i class="fas fa-user mr-1"></i> ${image.user}</span>
+                            <span class="text-sm text-gray-600"><i class="fas fa-heart mr-1"></i> ${image.likes}</span>
+                        </div>
+                        <button class="view-details-btn w-full py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors"
+                            data-id="${image.id}">
+                            View Details
+                        </button>
+                    </div>
+                `;
+                imagesGrid.appendChild(imageCard);
+                
+                // Add fade-in animation
+                setTimeout(() => {
+                    imageCard.classList.add('animate__animated', 'animate__fadeIn');
+                }, 100);
+            });
+            
+            // Add event listeners to image cards
+            document.querySelectorAll('.view-details-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const imageId = e.target.dataset.id;
+                    showImageDetails(imageId);
+                });
+            });
+            
+            document.querySelectorAll('img[data-id]').forEach(img => {
+                img.addEventListener('click', (e) => {
+                    const imageId = e.target.dataset.id;
+                    showImageDetails(imageId);
+                });
+            });
+        }
+
+        // Show image details in modal
+        function showImageDetails(imageId) {
+            currentImageId = imageId;
+            showLoading();
+            
+            // Find the image in the current results (we could also make a new API call for full details)
+            const url = `https://pixabay.com/api/?key=${API_KEY}&id=${imageId}`;
+            
+            const xhr = new XMLHttpRequest();
+            xhr.open('GET', url, true);
+            xhr.onload = function() {
+                if (this.status === 200) {
+                    const response = JSON.parse(this.responseText);
+                    if (response.hits.length > 0) {
+                        const image = response.hits[0];
+                        
+                        // Populate modal
+                        modalImage.src = image.largeImageURL;
+                        modalImage.alt = image.tags;
+                        imageUser.innerHTML = `<strong>User:</strong> ${image.user}`;
+                        imageTags.innerHTML = `<strong>Tags:</strong> ${image.tags}`;
+                        imageSize.innerHTML = `<strong>Dimensions:</strong> ${image.imageWidth} × ${image.imageHeight} pixels`;
+                        
+                        // Update download buttons
+                        Array.from(downloadBtns).forEach(btn => {
+                            btn.onclick = function() {
+                                let downloadUrl;
+                                switch(this.dataset.size) {
+                                    case 'large':
+                                        downloadUrl = image.largeImageURL;
+                                        break;
+                                    case 'medium':
+                                        downloadUrl = image.webformatURL;
+                                        break;
+                                    case 'small':
+                                        downloadUrl = image.previewURL;
+                                        break;
+                                    default:
+                                        downloadUrl = image.largeImageURL;
+                                }
+                                downloadImage(downloadUrl, `pixabay-${image.id}-${this.dataset.size}.jpg`);
+                            };
+                        });
+                        
+                        // Show modal
+                        imageModal.classList.remove('hidden');
+                    }
+                }
+                hideLoading();
+            };
+            xhr.send();
+        }
+
+        // Download image
+        function downloadImage(url, filename) {
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        // Setup pagination
+        function setupPagination() {
+            if (totalHits <= perPage) {
+                pagination.classList.add('hidden');
+                return;
+            }
+            
+            pagination.classList.remove('hidden');
+            prevPageBtn.disabled = currentPage === 1;
+            nextPageBtn.disabled = currentPage === Math.ceil(totalHits / perPage);
+            
+            // Calculate page numbers to show
+            const totalPages = Math.ceil(totalHits / perPage);
+            let startPage = Math.max(1, currentPage - 2);
+            let endPage = Math.min(totalPages, currentPage + 2);
+            
+            // Adjust if we're at the beginning or end
+            if (currentPage <= 3) {
+                endPage = Math.min(5, totalPages);
+            }
+            if (currentPage >= totalPages - 2) {
+                startPage = Math.max(1, totalPages - 4);
+            }
+            
+            // Clear existing page numbers
+            pageNumbers.innerHTML = '';
+            
+            // Add page numbers
+            for (let i = startPage; i <= endPage; i++) {
+                const pageBtn = document.createElement('button');
+                pageBtn.className = `px-4 py-2 mx-1 rounded ${i === currentPage ? 'bg-purple-600 text-white' : 'bg-white hover:bg-purple-100'}`;
+                pageBtn.textContent = i;
+                pageBtn.addEventListener('click', () => {
+                    currentPage = i;
+                    fetchImages();
+                });
+                pageNumbers.appendChild(pageBtn);
+            }
+        }
+
+        // Show loading indicator
+        function showLoading() {
+            loadingIndicator.classList.remove('hidden');
+        }
+
+        // Hide loading indicator
+        function hideLoading() {
+            loadingIndicator.classList.add('hidden');
+        }
+
+        // Show no results message
+        function showNoResults() {
+            noResults.classList.remove('hidden');
+            pagination.classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
